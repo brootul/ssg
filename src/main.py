@@ -1,4 +1,3 @@
-# main.py
 import os
 import logging
 from htmlnode import markdown_to_html_node, extract_title
@@ -51,7 +50,7 @@ def generate_page(from_path, template_path, dest_path):
     """
     Generates an HTML page from a markdown file using a template.
     """
-    print(f"Generating page from {from_path} to {dest_path} using {template_path}")
+    logging.info(f"Generating page from {from_path} to {dest_path} using {template_path}")
 
     # Read the markdown file
     with open(from_path, 'r') as md_file:
@@ -78,6 +77,25 @@ def generate_page(from_path, template_path, dest_path):
         dest_file.write(page_content)
         logging.info(f"Generated page at {dest_path}")
 
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+    """
+    Recursively generates HTML pages for each markdown file found in dir_path_content.
+    """
+    for item in os.listdir(dir_path_content):
+        full_path = os.path.join(dir_path_content, item)
+        
+        if os.path.isdir(full_path):
+            # Create a corresponding subdirectory in the destination directory
+            sub_dest_path = os.path.join(dest_dir_path, item)
+            os.makedirs(sub_dest_path, exist_ok=True)
+            # Recurse into the subdirectory
+            generate_pages_recursive(full_path, template_path, sub_dest_path)
+        elif item.endswith('.md'):
+            # Found a markdown file, generate an HTML page
+            markdown_file = full_path
+            html_file = os.path.join(dest_dir_path, item.replace('.md', '.html'))
+            generate_page(markdown_file, template_path, html_file)
+
 def main():
     # Paths for the source and destination directories
     src_directory = "static"
@@ -89,14 +107,11 @@ def main():
     # Copy the contents from the source to the destination
     copy_directory_contents(src_directory, dest_directory)
 
-    # Now generate the index.html page from the markdown file
-    from_path = 'content/index.md'
-    template_path = 'template.html'
-    dest_path = os.path.join(dest_directory, 'index.html')
+    # Generate HTML pages for all Markdown files in the content directory
+    content_directory = "content"  # Adjust this path if your content directory is different
+    template_path = 'template.html'  # Adjust if necessary
 
-    # Generate the index.html page
-    generate_page(from_path, template_path, dest_path)
+    generate_pages_recursive(content_directory, template_path, dest_directory)
 
 if __name__ == "__main__":
     main()
-    
